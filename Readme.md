@@ -1,350 +1,235 @@
-Serverless Bookmark Application
-A full-stack serverless application built using AWS Amplify, AWS Lambda (Python), API Gateway, Amazon DynamoDB, and Amazon Cognito. This application allows users to register, sign in, and manage their personal collection of web bookmarks (create, read, update, and delete).
+# Serverless Bookmark Application
 
-Table of Contents
-Features
+A full-stack serverless application built using **AWS Amplify, AWS Lambda (Python), API Gateway, Amazon DynamoDB**, and **Amazon Cognito**. This application allows users to register, sign in, and manage their bookmarks securely.
 
-Architecture
+---
 
-Prerequisites
+## Table of Contents
 
-Setup & Deployment
+- [Features](#features)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Setup & Deployment](#setup--deployment)
+  - [Clone the Repository](#clone-the-repository)
+  - [Initialize Amplify Project](#initialize-amplify-project)
+  - [Deploy Backend Resources](#deploy-backend-resources)
+  - [Frontend Setup (If applicable)](#frontend-setup-if-applicable)
+  - [API Gateway CORS Fix](#important-api-gateway-cors-fix)
+- [Usage](#usage)
+- [API Endpoints](#api-endpoints)
+- [Project Structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
-Clone the Repository
+---
 
-Initialize Amplify Project
+## Features
 
-Deploy Backend Resources
+- **User Authentication:** Secure user registration, confirmation, and sign-in powered by Amazon Cognito.
+- **Bookmark Management (CRUD):**
+  - Create new bookmarks with title, URL, description, and tags.
+  - Retrieve all bookmarks for the authenticated user.
+  - Retrieve a single bookmark by its ID.
+  - Update existing bookmark details.
+  - Delete bookmarks.
+- **Serverless Architecture:** Cost-effective and scalable using AWS Lambda, API Gateway, and DynamoDB.
+- **API-driven:** All operations exposed via a RESTful API.
 
-Frontend Setup (If applicable)
+---
 
-Important: API Gateway CORS Fix
+## Architecture
 
-Usage
-
-API Endpoints
-
-Project Structure
-
-Troubleshooting
-
-Contributing
-
-License
-
-Features
-User Authentication: Secure user registration, confirmation, and sign-in powered by Amazon Cognito.
-
-Bookmark Management (CRUD):
-
-Create new bookmarks with a title, URL, description, and tags.
-
-Retrieve all bookmarks for the authenticated user.
-
-Retrieve a single bookmark by its ID.
-
-Update existing bookmark details.
-
-Delete bookmarks.
-
-Serverless Architecture: Cost-effective and scalable using AWS Lambda, API Gateway, and DynamoDB.
-
-API-driven: All operations are exposed via a RESTful API.
-
-Architecture
 This application leverages the following AWS services:
 
-AWS Amplify: Provides a comprehensive development platform for building secure, scalable mobile and web applications. It simplifies the setup and management of the backend services and offers continuous deployment.
+- **AWS Amplify:** Simplifies setup and management of backend services.
+- **AWS Lambda:** Handles backend logic (Python) in response to API requests.
+- **Amazon API Gateway:** Manages all API requests, routes them to Lambda, manages authentication and CORS.
+- **Amazon DynamoDB:** NoSQL database for storing bookmark data.
+- **Amazon Cognito:** Manages user authentication and authorization.
 
-AWS Lambda: Executes the backend code (Python) in response to API requests without requiring you to provision or manage servers.
-
-Amazon API Gateway: Acts as the "front door" for the application, handling all API requests, routing them to the appropriate Lambda functions, and managing authentication and CORS.
-
-Amazon DynamoDB: A fast and flexible NoSQL database service used to store bookmark data.
-
-Amazon Cognito: Manages user directories, authentication, and authorization for the application, providing user pools for sign-up and sign-in functionalities.
-
+```
 +----------------+      +----------------+      +------------------+
-|                |      |                |      |                  |
-|   Frontend     |      |   API Gateway  |      |   AWS Lambda     |
-| (React/Web App)|----->| (REST Endpoints)|----->| (Python Backend) |
-|                |      |                |      |                  |
+|   Frontend     |----->|   API Gateway  |----->|   AWS Lambda     |
+| (React/Web App)|      | (REST Endpoints)|     | (Python Backend) |
 +----------------+      +--------+-------+      +--------+---------+
-                                 |                          |
                                  |                          |
                                  v                          v
                         +----------------+          +----------------+
                         | Amazon Cognito |          | Amazon DynamoDB|
                         | (User Auth)    |          | (Bookmark Data)|
                         +----------------+          +----------------+
+```
 
-Prerequisites
-Before you begin, ensure you have the following installed:
+---
 
-Git: For cloning the repository.
+## Prerequisites
 
-Node.js & npm: (or Yarn) For Amplify CLI and frontend dependencies.
+Make sure you have the following installed:
 
-Download Node.js
+- **Git:** For cloning the repository.
+- **Node.js & npm (or Yarn):** For Amplify CLI and frontend dependencies. [Download Node.js](https://nodejs.org/)
+- **AWS CLI:** Configured with your AWS credentials.  
+  - [Install AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+  - [Configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
+- **Amplify CLI:**
+  ```bash
+  npm install -g @aws-amplify/cli
+  ```
+  [Amplify CLI Installation Guide](https://docs.amplify.aws/cli/)
+- **Python 3.x:** Lambda function uses Python. Ensure Python 3.8+ is installed for development.
 
-AWS CLI: Configured with your AWS credentials.
+---
 
-Install AWS CLI
+## Setup & Deployment
 
-Configure AWS CLI
+### Clone the Repository
 
-Amplify CLI:
-
-npm install -g @aws-amplify/cli
-
-Amplify CLI Installation Guide
-
-Python 3.x: Your Lambda function is written in Python. Ensure you have Python 3.8+ installed locally for testing/development.
-
-Setup & Deployment
-Follow these steps to get the application running and deployed to your AWS account.
-
-Clone the Repository
-First, clone this repository to your local machine:
-
+```bash
 git clone <repository-url>
-cd <repository-directory> # e.g., cd Simple-Serverless-Application
+cd Simple-Serverless-Application
+```
 
-Initialize Amplify Project
-Navigate into the backend project directory and initialize the Amplify project. This will set up the necessary AWS resources in your account.
+### Initialize Amplify Project
 
-cd bookmark-backend # Adjust path if your project structure is different
+```bash
+cd bookmark-backend
 amplify init
+```
+- Choose `python` for Lambda runtime.
+- Follow the prompts and accept defaults for most questions.
 
-Follow the prompts. Accept the defaults for most questions.
+### Deploy Backend Resources
 
-Choose python for Lambda runtime.
-
-You might be prompted to configure a new AWS profile if not already done.
-
-Deploy Backend Resources
-After initialization, push the Amplify project to deploy all backend resources (Cognito, DynamoDB, Lambda, API Gateway) to your AWS account.
-
+```bash
 amplify push
+```
+- Deploys Cognito, DynamoDB, Lambda, and API Gateway.
+- Note the API endpoint URL and Cognito User Pool details from the output.
 
-This command will take some time as it provisions the cloud resources. Monitor the output in your terminal. If successful, it will provide the API endpoint URL and Cognito User Pool details.
+### Frontend Setup (If applicable)
 
-Frontend Setup (If applicable)
-If your frontend is in a separate directory (e.g., bookmark-frontend or frontend), navigate to that directory and install dependencies:
+If your frontend is in a separate directory:
 
-# Example if frontend is a React app
-cd ../bookmark-frontend # Go back to root then into frontend dir
+```bash
+cd ../bookmark-frontend
 npm install
-npm start # Or yarn start
+npm start # or yarn start
+```
+- Ensure your frontend is configured with the `aws-exports.js` (generated by Amplify).
 
-Ensure your frontend is configured with the aws-exports.js (or similar) generated by Amplify after amplify push. This file contains your API endpoint, Cognito details, etc.
+### Important: API Gateway CORS Fix
 
-Important: API Gateway CORS Fix
-After the initial amplify push, you might encounter 403 Forbidden errors for OPTIONS preflight requests on specific paths like /bookmarks/{bookmarkId}. This is a common CORS issue at API Gateway. You need to manually enable CORS for these nested resources in the AWS Console.
+If you get `403 Forbidden` errors for OPTIONS preflight requests, manually enable CORS in API Gateway:
 
-Go to the AWS Console and navigate to API Gateway (https://console.aws.amazon.com/apigateway/).
+1. Go to the [AWS API Gateway Console](https://console.aws.amazon.com/apigateway/).
+2. Find your API.
+3. In "Resources", select `/bookmarks` and then `{proxy+}` or `{bookmarkId}`.
+4. Click "Actions" > "Enable CORS".
+5. Configure:
+   - **Origins:** `*` (for development) or your frontend origin.
+   - **Methods:** GET, POST, PUT, DELETE, OPTIONS.
+   - **Headers:** `*` or `Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token`.
+6. Click "Enable CORS and replace existing CORS headers".
+7. "Actions" > "Deploy API" (to Prod stage).
 
-Find your API (e.g., your_amplify_app_name_Prod).
+---
 
-In the left sidebar, click on "Resources".
+## Usage
 
-Expand the resources to find /bookmarks and then select its child resource, which should be named something like {proxy+} or {bookmarkId}.
+1. **Register:** Create a user account via the frontend.
+2. **Confirm User:** If email verification is enabled, enter the confirmation code sent to your email.
+3. **Sign In:** Use your credentials to sign in.
+4. **Manage Bookmarks:** Add, view, edit, or delete bookmarks.
 
-With this specific resource selected, click the "Actions" dropdown menu and choose "Enable CORS".
+---
 
-In the CORS configuration dialog:
+## API Endpoints
 
-Access-Control-Allow-Origins: Enter * (for development) or http://localhost:3000 (for your specific frontend origin).
+Replace `<API_GATEWAY_URL>` with your deployed API URL.
 
-Access-Control-Allow-Methods: Ensure GET, POST, PUT, DELETE, and OPTIONS are checked.
+| Method | Path                       | Description                        | Request Body (JSON)                                             | Response Body (JSON)                        |
+|--------|----------------------------|------------------------------------|------------------------------------------------------------------|---------------------------------------------|
+| POST   | `/register`                | Registers a new user               | `{ "email": "...", "password": "...", "userPoolClientId": "..."}`| `{ "message": "User registered successfully..."}` |
+| POST   | `/confirm`                 | Confirms user registration         | `{ "email": "...", "confirmationCode": "...", "userPoolClientId": "..."}` | `{ "message": "User confirmed successfully."}` |
+| POST   | `/signin`                  | Signs in a user                    | `{ "email": "...", "password": "...", "userPoolClientId": "..."}`| `{ "message": "Sign-in successful", "idToken": "...", "accessToken": "..."}` |
+| POST   | `/bookmarks`               | Creates a new bookmark (Auth req.) | `{ "title": "...", "url": "...", "description": "...", "tags": [...]}` | `{ "userId": "...", "bookmarkId": "...", ...}` |
+| GET    | `/bookmarks`               | Retrieves all bookmarks (Auth req.)| - | `[ { "userId": "...", "bookmarkId": "...", ... } ]` |
+| GET    | `/bookmarks/{bookmarkId}`  | Retrieves a single bookmark (Auth req.) | - | `{ "userId": "...", "bookmarkId": "...", ... }` |
+| PUT    | `/bookmarks/{bookmarkId}`  | Updates an existing bookmark (Auth req.) | `{ "title": "...", "description": "..."}` | `{ "userId": "...", "bookmarkId": "...", ... }` |
+| DELETE | `/bookmarks/{bookmarkId}`  | Deletes a bookmark (Auth req.)     | - | `{ "message": "Bookmark deleted successfully." }` |
 
-Access-Control-Allow-Headers: You can usually leave this as * or specify Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token.
+> **Note:** For authenticated endpoints, include an `Authorization` header with the user's ID Token (JWT) from Cognito:  
+> `Authorization: <IdToken>`
 
-Click "Enable CORS and replace existing CORS headers".
+---
 
-After enabling CORS, you must deploy your API for changes to take effect. Click the "Actions" dropdown again, choose "Deploy API", select your Prod stage, and click "Deploy".
+## Project Structure
 
-Usage
-Once the application is deployed and the frontend is running:
-
-Register: Create a new user account on the frontend's registration page.
-
-Confirm User: If email verification is enabled in your Cognito User Pool, you'll receive a confirmation code. Enter this code on the confirmation page.
-
-Sign In: Use your registered credentials to sign in.
-
-Manage Bookmarks:
-
-Add Bookmark: Provide a title, URL, description, and optional tags.
-
-View Bookmarks: See a list of all your saved bookmarks.
-
-Edit Bookmark: Modify details of an existing bookmark.
-
-Delete Bookmark: Remove a bookmark from your collection.
-
-API Endpoints
-The API is exposed through AWS API Gateway. Replace <API_GATEWAY_URL> with the URL provided by amplify push.
-
-Method
-
-Path
-
-Description
-
-Request Body (JSON)
-
-Response Body (JSON)
-
-POST
-
-/register
-
-Registers a new user
-
-{"email": "user@example.com", "password": "securepassword", "userPoolClientId": "your-client-id"}
-
-{"message": "User registered successfully..."}
-
-POST
-
-/confirm
-
-Confirms user registration
-
-{"email": "user@example.com", "confirmationCode": "123456", "userPoolClientId": "your-client-id"}
-
-{"message": "User confirmed successfully."}
-
-POST
-
-/signin
-
-Signs in a user
-
-{"email": "user@example.com", "password": "securepassword", "userPoolClientId": "your-client-id"}
-
-{"message": "Sign-in successful", "idToken": "...", "accessToken": "..."}
-
-POST
-
-/bookmarks
-
-Creates a new bookmark (Auth required)
-
-{"title": "My Site", "url": "https://mysite.com", "description": "...", "tags": ["tech"]}
-
-{"userId": "...", "bookmarkId": "...", "title": "...", "url": "...", "createdAt": ...}
-
-GET
-
-/bookmarks
-
-Retrieves all bookmarks (Auth required)
-
-None
-
-[{"userId": "...", "bookmarkId": "...", "title": "...", ...}]
-
-GET
-
-/bookmarks/{bookmarkId}
-
-Retrieves a single bookmark (Auth required)
-
-None
-
-{"userId": "...", "bookmarkId": "...", "title": "...", ...}
-
-PUT
-
-/bookmarks/{bookmarkId}
-
-Updates an existing bookmark (Auth required)
-
-{"title": "New Title", "description": "Updated description"}
-
-{"userId": "...", "bookmarkId": "...", "title": "New Title", ...}
-
-DELETE
-
-/bookmarks/{bookmarkId}
-
-Deletes a bookmark (Auth required)
-
-None
-
-{"message": "Bookmark deleted successfully."}
-
-Note: For authenticated endpoints, you must include an Authorization header with the user's ID Token (JWT) obtained from Cognito after sign-in: Authorization: <IdToken>
-
-Project Structure
+```
 .
 ├── bookmark-backend/
 │   ├── bookmark_function/      # AWS Lambda function code
 │   │   ├── app.py              # Main Lambda handler
 │   │   ├── requirements.txt    # Python dependencies for Lambda
-│   │   └── ...
 │   ├── amplify/                # Amplify CLI backend configuration
 │   │   ├── backend/
 │   │   │   ├── auth/           # Cognito configuration
 │   │   │   ├── api/            # API Gateway & Lambda configuration
 │   │   │   ├── storage/        # DynamoDB configuration
-│   │   │   └── # other Amplify config files
-│   │   └── # other Amplify config files
 │   └── .gitignore
-├── bookmark-frontend/          # Your frontend application (e.g., React, Vue, Angular)
+├── bookmark-frontend/          # Frontend app (React, etc.)
 │   ├── public/
 │   ├── src/
 │   │   ├── App.js
 │   │   ├── index.js
 │   │   ├── aws-exports.js      # Auto-generated by Amplify CLI
-│   │   └── ...
 │   ├── package.json
-│   └── ...
 └── README.md
+```
 
-Troubleshooting
-Here are some common issues and their solutions:
+---
 
-500 Internal Server Error with module 'boto3' has no attribute 'util':
+## Troubleshooting
 
-Cause: The deployed Lambda function is still using an older version of the code that tries to access boto3.util.current_time_millis(), which is deprecated.
+- **500 Internal Server Error: `module 'boto3' has no attribute 'util'`**
+  - **Cause:** Lambda using old code referencing `boto3.util.current_time_millis()`.
+  - **Solution:** Update `app.py` to use `datetime.datetime.now(datetime.timezone.utc).timestamp() * 1000` and redeploy with `amplify push`.
 
-Solution: Ensure your local app.py has been updated to use datetime.datetime.now(datetime.timezone.utc).timestamp() * 1000 for timestamps, and that a new amplify push has successfully deployed this change. Verify the code directly in the AWS Lambda console.
+- **500 Internal Server Error: `Object of type Decimal is not JSON serializable`**
+  - **Cause:** DynamoDB returns numbers as Python `Decimal`.
+  - **Solution:** Use a custom `DecimalEncoder` (see `app.py`) and pass `cls=DecimalEncoder` to all `json.dumps()` calls. Redeploy.
 
-500 Internal Server Error with Object of type Decimal is not JSON serializable:
+- **403 Forbidden for OPTIONS requests (CORS preflight failures)**
+  - **Cause:** Improper API Gateway CORS configuration.
+  - **Solution:** Manually enable CORS for the endpoint in API Gateway and redeploy (see [CORS Fix](#important-api-gateway-cors-fix)).
 
-Cause: DynamoDB numbers are returned as Python Decimal objects by boto3, but the standard json.dumps() function doesn't know how to convert them to JSON-compatible numbers.
+- **Backend changes not reflecting after git push**
+  - **Cause:** Amplify Console build pipeline not triggered or failed.
+  - **Solution:** Check build status in Amplify Console and inspect logs for errors.
 
-Solution: Implement a custom DecimalEncoder class (as shown in app.py in the repository) and pass cls=DecimalEncoder to all json.dumps() calls in your Lambda function. Then, perform a new amplify push.
+---
 
-403 Forbidden for OPTIONS requests (CORS preflight failures):
+## Contributing
 
-Cause: API Gateway's CORS configuration is not correctly set up for a specific resource path (e.g., /bookmarks/{bookmarkId}).
+Contributions are welcome!  
+To contribute:
 
-Solution: Manually enable CORS for the affected resource in the AWS API Gateway console and redeploy the API (see Important: API Gateway CORS Fix section above).
+1. Fork the repository.
+2. Create a new branch:
+   ```bash
+   git checkout -b feature/your-feature
+   ```
+3. Make your changes.
+4. Commit:
+   ```bash
+   git commit -m "Add new feature"
+   git push origin feature/your-feature
+   ```
+5. Open a Pull Request.
 
-Backend changes not reflecting after git push:
+---
 
-Cause: The AWS Amplify Console build pipeline might not have been triggered, or it failed.
+## License
 
-Solution: Go to the AWS Amplify Console for your application and check the build status. If it failed, inspect the build logs for errors. If no build was triggered, ensure your Git repository is correctly connected and your push was to the monitored branch.
-
-Contributing
-Contributions are welcome! If you have suggestions or improvements, please:
-
-Fork the repository.
-
-Create a new branch (git checkout -b feature/your-feature).
-
-Make your changes.
-
-Commit your changes (git commit -m 'Add new feature').
-
-Push to the branch (git push origin feature/your-feature).
-
-Open a Pull Request.
-
-License
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
