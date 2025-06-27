@@ -2,24 +2,15 @@ import json
 import os
 import uuid
 import boto3
-import datetime
-from decimal import Decimal # <-- ADDED THIS IMPORT for Decimal type
+import datetime # <-- IMPORTANT: This import is necessary for timestamps
 from botocore.exceptions import ClientError
+# from botocore import utils # Removed: not used and could be causing issues
+
 import logging
 
 # Configure logging
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-
-# Custom JSON Encoder to handle Decimal objects from DynamoDB
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Decimal):
-            # Check if it's an integer (like our timestamps) or a float
-            if obj % 1 == 0:
-                return int(obj)
-            return float(obj)
-        return json.JSONEncoder.default(self, obj)
 
 dynamodb = boto3.resource('dynamodb')
 cognito_client = boto3.client('cognito-idp')
@@ -47,6 +38,7 @@ def get_user_id_from_event(event):
         return None
 
 # Helper function to get current UTC timestamp in milliseconds
+# This replaces boto3.util.current_time_millis()
 def current_time_millis():
     return int(datetime.datetime.now(datetime.timezone.utc).timestamp() * 1000)
 
@@ -90,7 +82,7 @@ def register_user(event):
                 'message': 'User registered successfully. Please confirm your email.',
                 'userSub': response['UserConfirmed'],
                 'userConfirmed': response['UserConfirmed'] # Indicates if auto-confirm is on
-            }, cls=DecimalEncoder) # <-- Ensure this also uses the encoder if needed
+            })
         }
     except ClientError as e:
         logger.error(f"Cognito registration error: {e}")
@@ -105,7 +97,7 @@ def register_user(event):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': error_message, 'code': error_code}, cls=DecimalEncoder)
+            'body': json.dumps({'error': error_message, 'code': error_code})
         }
     except Exception as e:
         logger.error(f"General registration error: {e}")
@@ -117,7 +109,7 @@ def register_user(event):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': 'An unexpected error occurred during registration.'}, cls=DecimalEncoder)
+            'body': json.dumps({'error': 'An unexpected error occurred during registration.'})
         }
 
 def confirm_user_registration(event):
@@ -137,7 +129,7 @@ def confirm_user_registration(event):
                     'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                     'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
                 },
-                'body': json.dumps({'error': 'Email, confirmation code, and UserPoolClientId are required.'}, cls=DecimalEncoder)
+                'body': json.dumps({'error': 'Email, confirmation code, and UserPoolClientId are required.'})
             }
 
         response = cognito_client.confirm_sign_up(
@@ -154,7 +146,7 @@ def confirm_user_registration(event):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'message': 'User confirmed successfully.'}, cls=DecimalEncoder)
+            'body': json.dumps({'message': 'User confirmed successfully.'})
         }
     except ClientError as e:
         logger.error(f"Cognito confirmation error: {e}")
@@ -169,7 +161,7 @@ def confirm_user_registration(event):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': error_message, 'code': error_code}, cls=DecimalEncoder)
+            'body': json.dumps({'error': error_message, 'code': error_code})
         }
     except Exception as e:
         logger.error(f"General confirmation error: {e}")
@@ -181,7 +173,7 @@ def confirm_user_registration(event):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': 'An unexpected error occurred during confirmation.'}, cls=DecimalEncoder)
+            'body': json.dumps({'error': 'An unexpected error occurred during confirmation.'})
         }
 
 def sign_in_user(event):
@@ -201,7 +193,7 @@ def sign_in_user(event):
                     'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                     'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
                 },
-                'body': json.dumps({'error': 'Email, password, and UserPoolClientId are required.'}, cls=DecimalEncoder)
+                'body': json.dumps({'error': 'Email, password, and UserPoolClientId are required.'})
             }
 
         response = cognito_client.initiate_auth(
@@ -225,7 +217,7 @@ def sign_in_user(event):
                 'idToken': response['AuthenticationResult']['IdToken'],
                 'accessToken': response['AuthenticationResult']['AccessToken'],
                 'refreshToken': response['AuthenticationResult'].get('RefreshToken') # Refresh token might not always be present on first login
-            }, cls=DecimalEncoder) # <-- Ensure this also uses the encoder if needed
+            })
         }
     except ClientError as e:
         logger.error(f"Cognito sign-in error: {e}")
@@ -240,7 +232,7 @@ def sign_in_user(event):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': error_message, 'code': error_code}, cls=DecimalEncoder)
+            'body': json.dumps({'error': error_message, 'code': error_code})
         }
     except Exception as e:
         logger.error(f"General sign-in error: {e}")
@@ -252,7 +244,7 @@ def sign_in_user(event):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': 'An unexpected error occurred during sign-in.'}, cls=DecimalEncoder)
+            'body': json.dumps({'error': 'An unexpected error occurred during sign-in.'})
         }
 
 def create_bookmark(event, user_id):
@@ -274,7 +266,7 @@ def create_bookmark(event, user_id):
                     'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                     'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
                 },
-                'body': json.dumps({'message': 'Title and URL are required.'}, cls=DecimalEncoder)
+                'body': json.dumps({'message': 'Title and URL are required.'})
             }
 
         bookmark_id = str(uuid.uuid4())
@@ -285,8 +277,8 @@ def create_bookmark(event, user_id):
             'url': url,
             'description': description,
             'tags': tags,
-            'createdAt': current_time_millis(),
-            'updatedAt': current_time_millis()
+            'createdAt': current_time_millis(), # <-- This needs to be current_time_millis()
+            'updatedAt': current_time_millis()  # <-- This needs to be current_time_millis()
         }
         table.put_item(Item=item)
         return {
@@ -297,7 +289,7 @@ def create_bookmark(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps(item, cls=DecimalEncoder) # <-- IMPORTANT: Use DecimalEncoder here
+            'body': json.dumps(item)
         }
     except Exception as e:
         logger.error(f"Error creating bookmark: {e}")
@@ -309,7 +301,7 @@ def create_bookmark(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': 'Could not create bookmark.'}, cls=DecimalEncoder)
+            'body': json.dumps({'error': 'Could not create bookmark.'})
         }
 
 def get_bookmarks(event, user_id):
@@ -327,7 +319,7 @@ def get_bookmarks(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps(response['Items'], cls=DecimalEncoder) # <-- IMPORTANT: Use DecimalEncoder here
+            'body': json.dumps(response['Items'])
         }
     except Exception as e:
         logger.error(f"Error retrieving bookmarks: {e}")
@@ -339,7 +331,7 @@ def get_bookmarks(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': 'Could not retrieve bookmarks.'}, cls=DecimalEncoder)
+            'body': json.dumps({'error': 'Could not retrieve bookmarks.'})
         }
 
 def get_bookmark_by_id(event, user_id):
@@ -359,7 +351,7 @@ def get_bookmark_by_id(event, user_id):
                     'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                     'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
                 },
-                'body': json.dumps({'message': 'Bookmark not found.'}, cls=DecimalEncoder)
+                'body': json.dumps({'message': 'Bookmark not found.'})
             }
         return {
             'statusCode': 200,
@@ -369,7 +361,7 @@ def get_bookmark_by_id(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps(response['Item'], cls=DecimalEncoder) # <-- IMPORTANT: Use DecimalEncoder here
+            'body': json.dumps(response['Item'])
         }
     except Exception as e:
         logger.error(f"Error retrieving bookmark by ID: {e}")
@@ -381,7 +373,7 @@ def get_bookmark_by_id(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': 'Could not retrieve bookmark.'}, cls=DecimalEncoder)
+            'body': json.dumps({'error': 'Could not retrieve bookmark.'})
         }
 
 def update_bookmark(event, user_id):
@@ -426,11 +418,11 @@ def update_bookmark(event, user_id):
                     'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                     'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
                 },
-                'body': json.dumps({'message': 'No update parameters provided.'}, cls=DecimalEncoder)
+                'body': json.dumps({'message': 'No update parameters provided.'})
             }
 
         update_expression_parts.append('updatedAt = :ua')
-        expression_attribute_values[':ua'] = current_time_millis()
+        expression_attribute_values[':ua'] = current_time_millis() # <-- This needs to be current_time_millis()
 
         update_expression = "SET " + ", ".join(update_expression_parts)
 
@@ -449,7 +441,7 @@ def update_bookmark(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps(response['Attributes'], cls=DecimalEncoder) # <-- IMPORTANT: Use DecimalEncoder here
+            'body': json.dumps(response['Attributes'])
         }
     except ClientError as e:
         if e.response['Error']['Code'] == 'ValidationException' and 'The provided key element does not match the schema' in e.response['Error']['Message']:
@@ -461,7 +453,7 @@ def update_bookmark(event, user_id):
                     'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                     'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
                 },
-                'body': json.dumps({'message': 'Bookmark not found or invalid key.'}, cls=DecimalEncoder)
+                'body': json.dumps({'message': 'Bookmark not found or invalid key.'})
             }
         logger.error(f"Error updating bookmark: {e}")
         return {
@@ -472,7 +464,7 @@ def update_bookmark(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': 'Could not update bookmark.'}, cls=DecimalEncoder)
+            'body': json.dumps({'error': 'Could not update bookmark.'})
         }
     except Exception as e:
         logger.error(f"General error updating bookmark: {e}")
@@ -484,7 +476,7 @@ def update_bookmark(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': 'An unexpected error occurred during update.'}, cls=DecimalEncoder)
+            'body': json.dumps({'error': 'An unexpected error occurred during update.'})
         }
 
 
@@ -506,7 +498,7 @@ def delete_bookmark(event, user_id):
                     'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                     'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
                 },
-                'body': json.dumps({'message': 'Bookmark not found.'}, cls=DecimalEncoder)
+                'body': json.dumps({'message': 'Bookmark not found.'})
             }
         return {
             'statusCode': 200,
@@ -516,7 +508,7 @@ def delete_bookmark(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'message': 'Bookmark deleted successfully.'}, cls=DecimalEncoder)
+            'body': json.dumps({'message': 'Bookmark deleted successfully.'})
         }
     except Exception as e:
         logger.error(f"Error deleting bookmark: {e}")
@@ -528,7 +520,7 @@ def delete_bookmark(event, user_id):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'error': 'Could not delete bookmark.'}, cls=DecimalEncoder)
+            'body': json.dumps({'error': 'Could not delete bookmark.'})
         }
 
 def lambda_handler(event, context):
@@ -567,7 +559,7 @@ def lambda_handler(event, context):
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
             },
-            'body': json.dumps({'message': 'Unauthorized: Missing or invalid authentication token.'}, cls=DecimalEncoder)
+            'body': json.dumps({'message': 'Unauthorized: Missing or invalid authentication token.'})
         }
 
     # Handle bookmark CRUD operations (requires authentication)
@@ -596,5 +588,5 @@ def lambda_handler(event, context):
             'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
             'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
         },
-        'body': json.dumps({'message': 'Not Found'}, cls=DecimalEncoder)
+        'body': json.dumps({'message': 'Not Found'})
     }
