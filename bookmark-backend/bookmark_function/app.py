@@ -3,6 +3,7 @@ import os
 import uuid
 import boto3
 from botocore.exceptions import ClientError
+from botocore import utils
 import logging
 
 # Configure logging
