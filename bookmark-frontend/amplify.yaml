@@ -1,0 +1,16 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci # Use npm ci for clean install in CI/CD environments
+    build:
+      commands:
+        - npm run build # <--- Add the build command for React
+  artifacts:
+    baseDirectory: build # <--- Point to the 'build' folder created by npm run build
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/* # Cache node_modules to speed up subsequent builds
