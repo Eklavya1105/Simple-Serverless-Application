@@ -2,9 +2,9 @@ import json
 import os
 import uuid
 import boto3
-import datetime # <-- ADDED THIS IMPORT
+import datetime # <-- IMPORTANT: This import is necessary for timestamps
 from botocore.exceptions import ClientError
-# from botocore import utils # <-- REMOVED THIS IMPORT as it's not used and might confuse
+# from botocore import utils # Removed: not used and could be causing issues
 
 import logging
 
@@ -38,6 +38,7 @@ def get_user_id_from_event(event):
         return None
 
 # Helper function to get current UTC timestamp in milliseconds
+# This replaces boto3.util.current_time_millis()
 def current_time_millis():
     return int(datetime.datetime.now(datetime.timezone.utc).timestamp() * 1000)
 
@@ -276,8 +277,8 @@ def create_bookmark(event, user_id):
             'url': url,
             'description': description,
             'tags': tags,
-            'createdAt': current_time_millis(), # <-- CHANGED HERE
-            'updatedAt': current_time_millis()  # <-- CHANGED HERE
+            'createdAt': current_time_millis(), # <-- This needs to be current_time_millis()
+            'updatedAt': current_time_millis()  # <-- This needs to be current_time_millis()
         }
         table.put_item(Item=item)
         return {
@@ -421,7 +422,7 @@ def update_bookmark(event, user_id):
             }
 
         update_expression_parts.append('updatedAt = :ua')
-        expression_attribute_values[':ua'] = current_time_millis() # <-- CHANGED HERE
+        expression_attribute_values[':ua'] = current_time_millis() # <-- This needs to be current_time_millis()
 
         update_expression = "SET " + ", ".join(update_expression_parts)
 
