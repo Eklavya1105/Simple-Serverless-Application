@@ -2,8 +2,10 @@ import json
 import os
 import uuid
 import boto3
+import datetime # <-- ADDED THIS IMPORT
 from botocore.exceptions import ClientError
-from botocore import utils
+# from botocore import utils # <-- REMOVED THIS IMPORT as it's not used and might confuse
+
 import logging
 
 # Configure logging
@@ -15,11 +17,6 @@ cognito_client = boto3.client('cognito-idp')
 
 TABLE_NAME = os.environ.get('BOOKMARKS_TABLE_NAME')
 USER_POOL_ID = os.environ.get('USER_POOL_ID')
-# USER_POOL_CLIENT_ID is typically managed by the client (frontend) or passed as a header.
-# For direct Cognito calls from Lambda (e.g., sign_up, initiate_auth),
-# we'll assume it's passed in the request body for simplicity, or fetched from another env var
-# if it's always fixed for this backend's direct operations.
-# For now, ensure your frontend passes it.
 
 def get_table():
     return dynamodb.Table(TABLE_NAME)
@@ -39,6 +36,10 @@ def get_user_id_from_event(event):
     except KeyError as e:
         logger.error(f"Error extracting user ID from claims: {e}")
         return None
+
+# Helper function to get current UTC timestamp in milliseconds
+def current_time_millis():
+    return int(datetime.datetime.now(datetime.timezone.utc).timestamp() * 1000)
 
 def register_user(event):
     """Handles user registration (Cognito SignUp)."""
@@ -275,8 +276,8 @@ def create_bookmark(event, user_id):
             'url': url,
             'description': description,
             'tags': tags,
-            'createdAt': boto3.util.current_time_millis(),
-            'updatedAt': boto3.util.current_time_millis()
+            'createdAt': current_time_millis(), # <-- CHANGED HERE
+            'updatedAt': current_time_millis()  # <-- CHANGED HERE
         }
         table.put_item(Item=item)
         return {
@@ -420,7 +421,7 @@ def update_bookmark(event, user_id):
             }
 
         update_expression_parts.append('updatedAt = :ua')
-        expression_attribute_values[':ua'] = boto3.util.current_time_millis()
+        expression_attribute_values[':ua'] = current_time_millis() # <-- CHANGED HERE
 
         update_expression = "SET " + ", ".join(update_expression_parts)
 
