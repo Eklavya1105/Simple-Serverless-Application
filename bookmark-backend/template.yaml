@@ -1,0 +1,179 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless Bookmark Application
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: ServerlessBookmarkApp
+
+Resources:
+  # Cognito User Pool for Authentication
+  BookmarkUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${ProjectName}-UserPool"
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireUppercase: true
+          RequireSymbols: true
+
+  BookmarkUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: !Sub "${ProjectName}-AppClient"
+      UserPoolId: !Ref BookmarkUserPool
+      GenerateSecret: false # Important for client-side applications
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      SupportedIdentityProviders:
+        - COGNITO
+
+  # DynamoDB Table for Bookmarks
+  BookmarksTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${ProjectName}-Bookmarks"
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: bookmarkId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: bookmarkId
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST # On-demand capacity for cost efficiency
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: bookmarkId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  # API Gateway definition, including the Cognito Authorizer
+  # RENAMED FROM ServerlessRestApi TO BookmarkApi to avoid reserved ID conflict
+  BookmarkApi: # This is the new logical ID for the API Gateway
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer # Optional: Sets a default authorizer for ALL methods, unless overridden
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt BookmarkUserPool.Arn
+            IdentitySource: method.request.header.Authorization
+
+  # Lambda Function for Bookmark Operations (CRUD)
+  BookmarksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: bookmark_function/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Timeout: 30
+      MemorySize: 128
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BookmarksTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cognito-idp:AdminGetUser
+                - cognito-idp:SignUp
+                - cognito-idp:InitiateAuth
+                - cognito-idp:ConfirmSignUp
+              Resource: !GetAtt BookmarkUserPool.Arn
+      Environment:
+        Variables:
+          BOOKMARKS_TABLE_NAME: !Ref BookmarksTable
+          USER_POOL_ID: !Ref BookmarkUserPool
+      Events:
+        CreateBookmark:
+          Type: Api
+          Properties:
+            Path: /bookmarks
+            Method: post
+            RestApiId: !Ref BookmarkApi # Updated reference
+            Auth:
+              Authorizer: CognitoAuthorizer
+        GetBookmarks:
+          Type: Api
+          Properties:
+            Path: /bookmarks
+            Method: get
+            RestApiId: !Ref BookmarkApi # Updated reference
+            Auth:
+              Authorizer: CognitoAuthorizer
+        GetBookmarkById:
+          Type: Api
+          Properties:
+            Path: /bookmarks/{bookmarkId}
+            Method: get
+            RestApiId: !Ref BookmarkApi # Updated reference
+            Auth:
+              Authorizer: CognitoAuthorizer
+        UpdateBookmark:
+          Type: Api
+          Properties:
+            Path: /bookmarks/{bookmarkId}
+            Method: put
+            RestApiId: !Ref BookmarkApi # Updated reference
+            Auth:
+              Authorizer: CognitoAuthorizer
+        DeleteBookmark:
+          Type: Api
+          Properties:
+            Path: /bookmarks/{bookmarkId}
+            Method: delete
+            RestApiId: !Ref BookmarkApi # Updated reference
+            Auth:
+              Authorizer: CognitoAuthorizer
+        RegisterUser:
+          Type: Api
+          Properties:
+            Path: /register
+            Method: post
+            RestApiId: !Ref BookmarkApi # Updated reference
+            Auth:
+              Authorizer: NONE
+        SignInUser:
+          Type: Api
+          Properties:
+            Path: /signin
+            Method: post
+            RestApiId: !Ref BookmarkApi # Updated reference
+            Auth:
+              Authorizer: NONE
+        ConfirmUser:
+          Type: Api
+          Properties:
+            Path: /confirm
+            Method: post
+            RestApiId: !Ref BookmarkApi # Updated reference
+            Auth:
+              Authorizer: NONE
+
+Outputs:
+  ApiGatewayEndpoint:
+    Description: "API Gateway endpoint URL for Prod stage"
+    Value: !Sub "https://${BookmarkApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/" # Updated reference
+  UserPoolId:
+    Description: "Cognito User Pool ID"
+    Value: !Ref BookmarkUserPool
+  UserPoolClientId:
+    Description: "Cognito User Pool Client ID"
+    Value: !Ref BookmarkUserPoolClient
+  BookmarksTableName:
+    Description: "DynamoDB Bookmarks Table Name"
+    Value: !Ref BookmarksTable
