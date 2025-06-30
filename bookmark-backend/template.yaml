@@ -176,3 +176,10 @@ Outputs:
   BookmarksTableName:
     Description: "DynamoDB Bookmarks Table Name"
     Value: !Ref BookmarksTable
+
+
+
+
+
+
+
