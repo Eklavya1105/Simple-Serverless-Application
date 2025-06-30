@@ -215,21 +215,17 @@ Replace `<API_GATEWAY_URL>` with your deployed API URL.
 Contributions are welcome!  
 To contribute:
 
-1. Fork the repository.
-2. Create a new branch:
-   ```bash
-   git checkout -b feature/your-feature
-   ```
-3. Make your changes.
-4. Commit:
-   ```bash
-   git commit -m "Add new feature"
-   git push origin feature/your-feature
-   ```
-5. Open a Pull Request.
+Fork the repository.
 
----
+Create a new branch (git checkout -b feature/your-feature).
 
-## License
+Make your changes.
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+Commit your changes (git commit -m 'Add new feature').
+
+Push to the branch (git push origin feature/your-feature).
+
+Open a Pull Request.
+
+License
+This project is licensed under the MIT License - see the LICENSE file for details.
