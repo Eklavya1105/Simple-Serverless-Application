@@ -8,7 +8,6 @@ Parameters:
     Default: ServerlessBookmarkApp
 
 Resources:
-  # Cognito User Pool for Authentication
   BookmarkUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -30,7 +29,7 @@ Resources:
     Properties:
       ClientName: !Sub "${ProjectName}-AppClient"
       UserPoolId: !Ref BookmarkUserPool
-      GenerateSecret: false # Important for client-side applications
+      GenerateSecret: false 
       ExplicitAuthFlows:
         - ALLOW_USER_SRP_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
@@ -104,7 +103,7 @@ Resources:
           Properties:
             Path: /bookmarks
             Method: post
-            RestApiId: !Ref BookmarkApi # Updated reference
+            RestApiId: !Ref BookmarkApi 
             Auth:
               Authorizer: CognitoAuthorizer
         GetBookmarks:
@@ -112,7 +111,7 @@ Resources:
           Properties:
             Path: /bookmarks
             Method: get
-            RestApiId: !Ref BookmarkApi # Updated reference
+            RestApiId: !Ref BookmarkApi 
             Auth:
               Authorizer: CognitoAuthorizer
         GetBookmarkById:
@@ -120,7 +119,7 @@ Resources:
           Properties:
             Path: /bookmarks/{bookmarkId}
             Method: get
-            RestApiId: !Ref BookmarkApi # Updated reference
+            RestApiId: !Ref BookmarkApi 
             Auth:
               Authorizer: CognitoAuthorizer
         UpdateBookmark:
@@ -128,7 +127,7 @@ Resources:
           Properties:
             Path: /bookmarks/{bookmarkId}
             Method: put
-            RestApiId: !Ref BookmarkApi # Updated reference
+            RestApiId: !Ref BookmarkApi 
             Auth:
               Authorizer: CognitoAuthorizer
         DeleteBookmark:
@@ -136,7 +135,7 @@ Resources:
           Properties:
             Path: /bookmarks/{bookmarkId}
             Method: delete
-            RestApiId: !Ref BookmarkApi # Updated reference
+            RestApiId: !Ref BookmarkApi 
             Auth:
               Authorizer: CognitoAuthorizer
         RegisterUser:
@@ -144,7 +143,7 @@ Resources:
           Properties:
             Path: /register
             Method: post
-            RestApiId: !Ref BookmarkApi # Updated reference
+            RestApiId: !Ref BookmarkApi 
             Auth:
               Authorizer: NONE
         SignInUser:
@@ -152,7 +151,7 @@ Resources:
           Properties:
             Path: /signin
             Method: post
-            RestApiId: !Ref BookmarkApi # Updated reference
+            RestApiId: !Ref BookmarkApi 
             Auth:
               Authorizer: NONE
         ConfirmUser:
@@ -160,14 +159,14 @@ Resources:
           Properties:
             Path: /confirm
             Method: post
-            RestApiId: !Ref BookmarkApi # Updated reference
+            RestApiId: !Ref BookmarkApi 
             Auth:
               Authorizer: NONE
 
 Outputs:
   ApiGatewayEndpoint:
     Description: "API Gateway endpoint URL for Prod stage"
-    Value: !Sub "https://${BookmarkApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/" # Updated reference
+    Value: !Sub "https://${BookmarkApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/" 
   UserPoolId:
     Description: "Cognito User Pool ID"
     Value: !Ref BookmarkUserPool
